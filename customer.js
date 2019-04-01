@@ -24,5 +24,5 @@ function displayProducts() {
 }
 
 function invite() {
-  inquirer.prompt([]);
+  //   inquirer.prompt([]);
 }
