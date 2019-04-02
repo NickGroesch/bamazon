@@ -20,7 +20,7 @@ function displayProducts() {
     let displayTable = [];
     res.forEach(v => displayTable.push(renderRow(v)));
     renderTable(displayTable);
-    invite();
+    chooseBuy();
   });
 }
 
@@ -37,35 +37,63 @@ function renderTable(data) {
   console.log(output);
 }
 
-function invite() {
+function chooseBuy() {
   inquirer
     .prompt([
       {
-        message: "Enter the ID of the product you'd like to buy",
+        message: "Enter the ID of the product you'd like to buy.",
         name: "buyId"
       }
     ])
     .then(ans => {
-      console.log(ans.buyId);
-
-      connection.query(
-        `SELECT * FROM products WHERE id='${ans.buyId}'`,
-        function(err, res) {
-          console.log(res);
-
-          inquirer
-            .prompt([
-              {
-                message: `${res[0].product}s costs ${
-                  res[0].price
-                } each. How many would you like?`,
-                name: "quantity"
-              }
-            ])
-            .then(ans => {
-              console.log(ans.quantity);
-            });
-        }
-      );
+      // validate user input
+      if (0 < ans.buyId) {
+        howMany(ans.buyId);
+      } else {
+        pickList();
+      }
     });
+}
+function howMany(buyId) {
+  connection.query(`SELECT * FROM products WHERE id='${buyId}'`, function(
+    err,
+    res
+  ) {
+    console.log(res);
+
+    inquirer
+      .prompt([
+        {
+          message: `${res[0].product}s costs ${
+            res[0].price
+          } each. How many would you like?`,
+          name: "quantity"
+        }
+      ])
+      .then(ans => {
+        console.log(ans.quantity);
+      });
+  });
+}
+function pickList() {
+  inquirer.prompt([
+    {
+      message: "I couldn't understand that, pick this way.",
+      name: "buyList",
+      type: "list",
+      choices: function() {
+        let choices = [];
+        connection.query(`SELECT * FROM products`, function(err, res) {
+          res.forEach((v, i) => {
+            // console.log(v.product);
+            let item = { value: `${v.id}`, name: `${v.product}` };
+            console.log(choices);
+
+            choices.push(item);
+          });
+        });
+        return choices;
+      }
+    }
+  ]);
 }
