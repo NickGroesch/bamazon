@@ -13,8 +13,6 @@ var connection = mysql.createConnection({
 connection.connect(function(err) {
   // console.log("connected");
   displayProducts();
-
-  connection.end();
 });
 
 function displayProducts() {
@@ -22,6 +20,7 @@ function displayProducts() {
     let displayTable = [];
     res.forEach(v => displayTable.push(renderRow(v)));
     renderTable(displayTable);
+    invite();
   });
 }
 
@@ -33,10 +32,40 @@ function renderRow(v) {
   return row;
 }
 
-function invite() {
-  //   inquirer.prompt([]);
-}
 function renderTable(data) {
   let output = table.table(data);
   console.log(output);
+}
+
+function invite() {
+  inquirer
+    .prompt([
+      {
+        message: "Enter the ID of the product you'd like to buy",
+        name: "buyId"
+      }
+    ])
+    .then(ans => {
+      console.log(ans.buyId);
+
+      connection.query(
+        `SELECT * FROM products WHERE id='${ans.buyId}'`,
+        function(err, res) {
+          console.log(res);
+
+          inquirer
+            .prompt([
+              {
+                message: `${res[0].product}s costs ${
+                  res[0].price
+                } each. How many would you like?`,
+                name: "quantity"
+              }
+            ])
+            .then(ans => {
+              console.log(ans.quantity);
+            });
+        }
+      );
+    });
 }
