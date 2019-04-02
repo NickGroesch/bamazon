@@ -11,13 +11,20 @@ var connection = mysql.createConnection({
 });
 
 connection.connect(function(err) {
-  // console.log("connected");
+  console.log("connected");
   displayProducts();
 });
 
 function displayProducts() {
   connection.query(`SELECT * FROM products`, function(err, res) {
     let displayTable = [];
+    displayTable.push([
+      "-ID-",
+      "-Product-",
+      "-Price-",
+      "-Department-",
+      "-Quantity-"
+    ]);
     res.forEach(v => displayTable.push(renderRow(v)));
     renderTable(displayTable);
     chooseBuy();
@@ -64,7 +71,7 @@ function howMany(buyId) {
     inquirer
       .prompt([
         {
-          message: `${res[0].product}s costs ${
+          message: `${res[0].product}s cost ${
             res[0].price
           } each. How many would you like?`,
           name: "quantity"
@@ -76,24 +83,23 @@ function howMany(buyId) {
   });
 }
 function pickList() {
-  inquirer.prompt([
-    {
-      message: "I couldn't understand that, pick this way.",
-      name: "buyList",
-      type: "list",
-      choices: function() {
-        let choices = [];
-        connection.query(`SELECT * FROM products`, function(err, res) {
-          res.forEach((v, i) => {
-            // console.log(v.product);
-            let item = { value: `${v.id}`, name: `${v.product}` };
-            console.log(choices);
-
-            choices.push(item);
-          });
-        });
-        return choices;
-      }
-    }
-  ]);
+  connection.query(`SELECT * FROM products`, function(err, res) {
+    let choiceArray = [];
+    res.forEach((v, i) => {
+      let item = { value: `${v.id}`, name: `${v.product}` };
+      choiceArray.push(item);
+    });
+    inquirer
+      .prompt([
+        {
+          message: "I couldn't understand that, pick this way.",
+          name: "buyList",
+          type: "list",
+          choices: choiceArray
+        }
+      ])
+      .then(ans => {
+        howMany(ans.buyList);
+      });
+  });
 }
