@@ -9,10 +9,17 @@ var connection = mysql.createConnection({
   password: "root",
   database: "bamazon_db"
 });
+// global flags
+let productX;
+let quantityX;
+let idX;
+let priceX;
+let userQuantity;
 
 connection.connect(function(err) {
   console.log("connected");
   displayProducts();
+  // chooseBuy();
 });
 
 function displayProducts() {
@@ -45,6 +52,7 @@ function renderTable(data) {
 }
 
 function chooseBuy() {
+  // displayProducts();
   inquirer
     .prompt([
       {
@@ -67,18 +75,41 @@ function howMany(buyId) {
     res
   ) {
     console.log(res);
-
+    idX = buyId;
+    priceX = res[0].price;
+    productX = res[0].product;
+    quantityX = res[0].quantity;
     inquirer
       .prompt([
         {
-          message: `${res[0].product}s cost ${
-            res[0].price
-          } each. How many would you like?`,
+          message: `${productX}s cost ${priceX} each. How many would you like?`,
           name: "quantity"
         }
       ])
       .then(ans => {
-        console.log(ans.quantity);
+        userQuantity = ans.quantity;
+        connection.query(
+          "INSERT INTO cart SET ?",
+          {
+            product: productX,
+            price: priceX,
+            cartQuantity: userQuantity,
+            productId: idX
+          },
+          function(err, res) {
+            console.log("Added to cart!");
+            connection.query("UPDATE products SET ? WHERE ?", [
+              {
+                quantity: quantityX - userQuantity
+              },
+              {
+                id: idX
+              }
+            ]);
+
+            shopMore();
+          }
+        );
       });
   });
 }
@@ -101,5 +132,42 @@ function pickList() {
       .then(ans => {
         howMany(ans.buyList);
       });
+  });
+}
+function shopMore() {
+  inquirer
+    .prompt([
+      {
+        name: "decide",
+        message: "What's next?",
+        type: "list",
+        choices: ["Keep Shopping", "Empty Cart", "Check Out"]
+      }
+    ])
+    .then(function(ans) {
+      if (ans.decide == "Check Out") {
+        console.log("?CHECKOUT");
+      }
+      if (ans.decide == "Keep Shopping") {
+        displayProducts();
+      }
+      if (ans.decide == "Empty Cart") {
+        emptyCart();
+      }
+    });
+}
+function emptyCart() {
+  connection.query(`SELECT * FROM cart`, function(err, res) {
+    res.forEach((v, i) => {
+      let returnId = res[i].productId;
+      let returnQuantity = res[i].cartQuantity;
+      connection.query(
+        `UPDATE products SET quantity=quantity+${returnQuantity} WHERE ?`,
+        [{ id: returnId }],
+        function(err, res) {
+          connection.query(`delete from cart where id= '${i + 1}'`);
+        }
+      );
+    });
   });
 }
