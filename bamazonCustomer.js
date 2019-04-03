@@ -1,7 +1,7 @@
 const inquirer = require("inquirer");
 var mysql = require("mysql");
 const table = require("table");
-
+// bamazon wouldn't work without a database!
 var connection = mysql.createConnection({
   host: "localhost",
   port: 8889,
@@ -9,19 +9,19 @@ var connection = mysql.createConnection({
   password: "root",
   database: "bamazon_db"
 });
-// global flags
+// global flags for data that we don't want scoped
 let productX;
 let quantityX;
 let idX;
 let priceX;
 let userQuantity;
-
+// initialization function
 connection.connect(function(err) {
   console.log("connected");
   displayProducts();
   // chooseBuy();
 });
-
+// grabs the data from database and renders a table for shopper, then directs them to shop
 function displayProducts() {
   connection.query(`SELECT * FROM products`, function(err, res) {
     let displayTable = [];
@@ -37,7 +37,7 @@ function displayProducts() {
     chooseBuy();
   });
 }
-
+// for in loop renders table row for each product
 function renderRow(v) {
   let row = [];
   for (var prop in v) {
@@ -45,12 +45,12 @@ function renderRow(v) {
   }
   return row;
 }
-
+// actually renders the table to the console
 function renderTable(data) {
   let output = table.table(data);
   console.log(output);
 }
-
+// basic numeral entry to choose which item to shop for
 function chooseBuy() {
   // displayProducts();
   inquirer
@@ -69,12 +69,12 @@ function chooseBuy() {
       }
     });
 }
+// this function reminds the user of the price and asks how many they want
 function howMany(buyId) {
   connection.query(`SELECT * FROM products WHERE id='${buyId}'`, function(
     err,
     res
   ) {
-    console.log(res);
     idX = buyId;
     priceX = res[0].price;
     productX = res[0].product;
@@ -88,31 +88,39 @@ function howMany(buyId) {
       ])
       .then(ans => {
         userQuantity = ans.quantity;
-        connection.query(
-          "INSERT INTO cart SET ?",
-          {
-            product: productX,
-            price: priceX,
-            cartQuantity: userQuantity,
-            productId: idX
-          },
-          function(err, res) {
-            console.log("Added to cart!");
-            connection.query("UPDATE products SET ? WHERE ?", [
-              {
-                quantity: quantityX - userQuantity
-              },
-              {
-                id: idX
-              }
-            ]);
+        if (userQuantity > quantityX) {
+          console.log(
+            `So sorry, we only have ${quantityX}. We can't sell you ${userQuantity}.`
+          );
+          howMany(idX);
+        } else {
+          connection.query(
+            "INSERT INTO cart SET ?",
+            {
+              product: productX,
+              price: priceX,
+              cartQuantity: userQuantity,
+              productId: idX
+            },
+            function(err, res) {
+              console.log("Added to cart!");
+              connection.query("UPDATE products SET ? WHERE ?", [
+                {
+                  quantity: quantityX - userQuantity
+                },
+                {
+                  id: idX
+                }
+              ]);
 
-            shopMore();
-          }
-        );
+              shopMore();
+            }
+          );
+        }
       });
   });
 }
+// in case the user needs help picking items because of validation isues
 function pickList() {
   connection.query(`SELECT * FROM products`, function(err, res) {
     let choiceArray = [];
@@ -134,6 +142,7 @@ function pickList() {
       });
   });
 }
+// after the user has picked an item and quantity, we give them a choice to shop more, checkout, or empty the cart
 function shopMore() {
   inquirer
     .prompt([
@@ -146,7 +155,7 @@ function shopMore() {
     ])
     .then(function(ans) {
       if (ans.decide == "Check Out") {
-        console.log("?CHECKOUT");
+        checkOut();
       }
       if (ans.decide == "Keep Shopping") {
         displayProducts();
@@ -156,6 +165,7 @@ function shopMore() {
       }
     });
 }
+// if they empty the cart, we put the items they didn't pay for back on the virtual shelves, taking them out of the virtual cart when we do so
 function emptyCart() {
   connection.query(`SELECT * FROM cart`, function(err, res) {
     res.forEach((v, i) => {
@@ -169,5 +179,30 @@ function emptyCart() {
         }
       );
     });
+  });
+  shopMore();
+}
+function checkOut() {
+  let totalPrice = 0;
+  connection.query("select * from cart", function(err, res) {
+    res.forEach((v, i) => {
+      let subtotal = res[i].cartQuantity * res[i].price;
+      console.log(
+        `${res[i].cartQuantity} ${res[i].product}s at $${
+          res[i].price
+        } each is ${subtotal}`
+      );
+      totalPrice += subtotal;
+      connection.query(`delete from cart where id= '${res[i].id}'`);
+      connection.query("INSERT INTO sales SET ?", {
+        product: res[i].product,
+        price: res[i].price,
+        unitsSold: res[i].cartQuantity,
+        productId: res[i].productId,
+        totalSales: subtotal
+      });
+    });
+    console.log(`Your total comes out to ${totalPrice}. Have a bamazing day!`);
+    connection.end();
   });
 }
