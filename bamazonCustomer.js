@@ -182,6 +182,7 @@ function emptyCart() {
   });
   shopMore();
 }
+// when the customer has shopped enough, it's time to take their money!
 function checkOut() {
   let totalPrice = 0;
   connection.query("select * from cart", function(err, res) {
@@ -193,7 +194,9 @@ function checkOut() {
         } each is ${subtotal}`
       );
       totalPrice += subtotal;
+      // can't leave them in the cart
       connection.query(`delete from cart where id= '${res[i].id}'`);
+      // the store prefers to track sales
       connection.query("INSERT INTO sales SET ?", {
         product: res[i].product,
         price: res[i].price,
