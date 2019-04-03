@@ -17,10 +17,15 @@ let priceX;
 let userQuantity;
 // initialization function
 connection.connect(function(err) {
-  console.log("connected");
-  displayProducts();
+  console.log("Welcome to BAMAZON");
+  timetobuy();
   // chooseBuy();
 });
+// how can I make this a promise so it happens after, so that I can export displayProducts as well; display products has a query, that's why it returns after choosebuy
+function timetobuy() {
+  displayProducts();
+  chooseBuy();
+}
 // grabs the data from database and renders a table for shopper, then directs them to shop
 function displayProducts() {
   connection.query(`SELECT * FROM products`, function(err, res) {
@@ -34,7 +39,7 @@ function displayProducts() {
     ]);
     res.forEach(v => displayTable.push(renderRow(v)));
     renderTable(displayTable);
-    chooseBuy();
+    // chooseBuy();
   });
 }
 // for in loop renders table row for each product
@@ -209,3 +214,8 @@ function checkOut() {
     connection.end();
   });
 }
+module.exports = {
+  row: renderRow,
+  table: renderTable,
+  products: displayProducts
+};
