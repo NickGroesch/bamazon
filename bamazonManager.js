@@ -13,12 +13,12 @@ var connection = mysql.createConnection({
   password: "root",
   database: "bamazon_db"
 });
-
+// connect and begin the waterfall program flow
 connection.connect(function(err) {
   console.log("Bamazon Manager Interface");
   displayManager();
 });
-
+// take user input to direct the program to the appropriate functions
 function displayManager() {
   inquirer
     .prompt([
@@ -55,13 +55,16 @@ function displayManager() {
       }
     });
 }
+// allow user to view all the products
 function view() {
   rend(displayManager, "select * from products;");
 }
+// allow user to view only the products with low inventory
 function low() {
   console.log("WARNING: Low Inventory");
   rend(displayManager, "select * from products where quantity<40;");
 }
+// allow user to restock by adding new stock to existing quantity
 function restock() {
   console.log("restock");
   inquirer
@@ -83,6 +86,7 @@ function restock() {
       displayManager();
     });
 }
+// allow the user to add a new product to the database
 function newProd() {
   inquirer
     .prompt([

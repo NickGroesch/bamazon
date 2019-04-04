@@ -1,7 +1,6 @@
 const inquirer = require("inquirer");
 var mysql = require("mysql");
 const table = require("table");
-// var promiseDisplay = require("./display");
 // bamazon wouldn't work without a database!
 var connection = mysql.createConnection({
   host: "localhost",
@@ -17,9 +16,9 @@ let idX;
 let priceX;
 let userQuantity;
 let maxIndex = 0;
-
+// this conditional is super important, as it allows for promiseDisplay to be exported without automatically running with arguments from timetobuy() if called from another file
 if (__filename == process.argv[1]) {
-  // initialization function
+  //when called from this file, this initialization function begins the waterfall program flow
   connection.connect(function(err) {
     console.log(
       "----------------------Welcome to BAMAZON------------------------"
@@ -28,13 +27,11 @@ if (__filename == process.argv[1]) {
     timetobuy();
   });
 }
-
-// how can I make this a promise so it happens after, so that I can export displayProducts as well; display products has a query, that's why it returns after choosebuy
+// this function grabs the data from database and renders a table for shopper, then directs them to shop
 function timetobuy() {
   promiseDisplay(chooseBuy, "select * from products");
 }
-// // //the trouble below
-// grabs the data from database and renders a table for shopper, then directs them to shop
+// this function takes a callback(param), and a query, and creates a table with the help of renderRow and renderTable
 let promiseDisplay = function(param, query) {
   displayProducts = new Promise((resolve, reject) => {
     connection.query(query, function(err, res) {
@@ -69,10 +66,8 @@ function renderTable(data) {
   let output = table.table(data);
   console.log(output);
 }
-// // //the trouble above
 // basic numeral entry to choose which item to shop for
 function chooseBuy() {
-  // displayProducts();
   inquirer
     .prompt([
       {
@@ -81,7 +76,7 @@ function chooseBuy() {
       }
     ])
     .then(ans => {
-      // validate user input
+      // validate user input, first making sure its a number (>0), then making sure its a valid id (<maxIndex)
       if (0 < ans.buyId && ans.buyId <= maxIndex) {
         howMany(ans.buyId);
       } else {
@@ -140,7 +135,7 @@ function howMany(buyId) {
       });
   });
 }
-// in case the user needs help picking items because of validation isues
+// in case the user needs help picking items because of validation issues
 function pickList() {
   connection.query(`SELECT * FROM products`, function(err, res) {
     let choiceArray = [];
@@ -235,11 +230,5 @@ function checkOut() {
     connection.end();
   });
 }
-
-// module.exports = {
-//   // row: renderRow(),
-//   // table: renderTable(),
-//   // display: promiseDisplay()
-// };
-
+// export the promise display functionality
 module.exports = promiseDisplay;
