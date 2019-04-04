@@ -77,3 +77,23 @@ function createDept() {
       );
     });
 }
+function viewSales() {}
+function updateSales() {
+  // total the sales by product from the sales table
+  connection.query(
+    "select product, sum(totalSales) as grandTotal from sales group by product",
+    (err, re) => {
+      re.forEach((v, i) => {
+        let productTotal = re[i].grandTotal;
+        let product = re[i].product;
+        connection.query(
+          `select department from products where product='${re[i].product}'`,
+          (err, res) => {
+            let productDept = res[0].department;
+            console.log(productTotal, product, productDept);
+          }
+        );
+      });
+    }
+  );
+}
