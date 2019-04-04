@@ -27,11 +27,53 @@ function displaySupervisor() {
         choices: [
           "Update Sales Data",
           "View Sales by Department",
-          "Create New Department"
+          "Create New Department",
+          "Exit"
         ]
       }
     ])
     .then(ans => {
-      console.log(ans.option);
+      switch (ans.option) {
+        case "Update Sales Data":
+          updateSales();
+          break;
+        case "View Sales by Department":
+          viewSales();
+          break;
+        case "Create New Department":
+          createDept();
+          break;
+        case "Exit":
+          connection.end();
+          break;
+      }
+    });
+}
+function createDept() {
+  inquirer
+    .prompt([
+      {
+        name: "name",
+        message: "What is the name of the department you'll add?"
+      },
+      {
+        name: "overhead",
+        message: "How much is this departments overhead?"
+      }
+    ])
+    .then(ans => {
+      connection.query(
+        "INSERT INTO departments SET ?",
+        [
+          {
+            department: ans.name,
+            overhead: parseFloat(ans.overhead)
+          }
+        ],
+        (err, res) => {
+          console.log("Department Added");
+          displaySupervisor();
+        }
+      );
     });
 }

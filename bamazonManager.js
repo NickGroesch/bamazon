@@ -56,14 +56,11 @@ function displayManager() {
     });
 }
 function view() {
-  console.log("view func");
   rend(displayManager, "select * from products;");
-  //displayManager();
 }
 function low() {
   console.log("WARNING: Low Inventory");
-  rend(displayManager, "select * from products where quantity<10;");
-  //displayManager();
+  rend(displayManager, "select * from products where quantity<40;");
 }
 function restock() {
   console.log("restock");
