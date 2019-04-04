@@ -16,14 +16,19 @@ let quantityX;
 let idX;
 let priceX;
 let userQuantity;
-// initialization function
-connection.connect(function(err) {
-  console.log(
-    "----------------------Welcome to BAMAZON------------------------"
-  );
-  // // // if i disable this the trouble works in manager
-  // timetobuy();
-});
+let maxIndex = 0;
+
+if (__filename == process.argv[1]) {
+  // initialization function
+  connection.connect(function(err) {
+    console.log(
+      "----------------------Welcome to BAMAZON------------------------"
+    );
+    // // // if i disable this the trouble works in manager
+    timetobuy();
+  });
+}
+
 // how can I make this a promise so it happens after, so that I can export displayProducts as well; display products has a query, that's why it returns after choosebuy
 function timetobuy() {
   promiseDisplay(chooseBuy, "select * from products");
@@ -41,10 +46,13 @@ let promiseDisplay = function(param, query) {
         "-Department-",
         "-Quantity-"
       ]);
-      res.forEach(v => displayTable.push(renderRow(v)));
+      res.forEach((v, i) => {
+        displayTable.push(renderRow(v));
+        maxIndex = i + 1;
+      });
       renderTable(displayTable);
-      resolve("success");
       param();
+      resolve("success");
     });
   });
 };
@@ -74,7 +82,7 @@ function chooseBuy() {
     ])
     .then(ans => {
       // validate user input
-      if (0 < ans.buyId) {
+      if (0 < ans.buyId && ans.buyId <= maxIndex) {
         howMany(ans.buyId);
       } else {
         pickList();
@@ -227,6 +235,7 @@ function checkOut() {
     connection.end();
   });
 }
+
 // module.exports = {
 //   // row: renderRow(),
 //   // table: renderTable(),

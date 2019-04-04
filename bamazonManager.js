@@ -3,7 +3,7 @@ var mysql = require("mysql");
 var table = require("table");
 // because "its drier to require" (working functionality from other files)
 var rend = require("./bamazonCustomer");
-console.log(rend);
+//console.log(rend);
 
 // bamazon wouldn't work without a database!
 var connection = mysql.createConnection({
@@ -56,14 +56,14 @@ function displayManager() {
     });
 }
 function view() {
-  console.log("");
+  console.log("view func");
   rend(displayManager, "select * from products;");
-  displayManager();
+  //displayManager();
 }
 function low() {
   console.log("WARNING: Low Inventory");
   rend(displayManager, "select * from products where quantity<10;");
-  displayManager();
+  //displayManager();
 }
 function restock() {
   console.log("restock");
